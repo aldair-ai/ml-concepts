@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Concepts — DSC 240 UCSD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1c2030;
+    --border: #2a2f40;
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --accent: #5b8dee;
+    --red: #e05c6b;
+    --green: #4caf81;
+    --orange: #f09c4a;
+    --purple: #a47ff5;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 48px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 32px;
+    background: linear-gradient(135deg, #0d0f14 0%, #151a2a 100%);
+  }
+  header .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+    margin-bottom: 6px;
+  }
+  header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    color: var(--text2);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  /* ── Layout ── */
+  .container { display: flex; height: calc(100vh - 110px); }
+
+  /* ── Sidebar ── */
+  nav {
+    width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    overflow-y: auto;
+    background: var(--bg2);
+  }
+  nav .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text2);
+    padding: 8px 24px 4px;
+    text-transform: uppercase;
+  }
+  nav button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 24px;
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  nav button:hover { color: var(--text); background: var(--bg3); }
+  nav button.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(91, 141, 238, 0.06);
+    font-weight: 500;
+  }
+
+  /* ── Main panel ── */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px 40px;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; animation: fadeIn 0.2s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  /* ── Canvas area ── */
+  .canvas-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 4px;
+    cursor: crosshair;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #4a7de0; }
+  .btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.green { background: var(--green); border-color: var(--green); color: #fff; }
+
+  label { font-size: 13px; color: var(--text2); }
+  input[type=range] { accent-color: var(--accent); cursor: pointer; width: 140px; }
+  .val-display {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 36px;
+  }
+
+  /* ── Info cards ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 24px; }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .card h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .card .big {
+    font-size: 26px;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .card p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* ── Equation box ── */
+  .eq-box {
+    background: var(--bg3);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    margin: 16px 0;
+    white-space: pre-wrap;
+    line-height: 1.8;
+  }
+
+  /* ── Log ── */
+  .log {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+    height: 80px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+
+  /* ── Double descent chart ── */
+  #dd-canvas { background: var(--bg3); }
+
+  /* ── Concept map ── */
+  .cmap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .cmap-node {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    transition: border-color 0.2s;
+  }
+  .cmap-node:hover { border-color: var(--accent); }
+  .cmap-node h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cmap-node p { font-size: 13px; color: var(--text2); }
+  .cmap-node .links { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="badge">DSC 240 · UCSD · Spring 2026</div>
+    <h1>Machine Learning Concepts</h1>
+    <p>Interactive companion — click a topic in the sidebar to explore</p>
+  </div>
+</header>
+
+<div class="container">
+  <nav>
+    <div class="section-label">Foundations</div>
+    <button class="active" onclick="show('perceptron', this)">Perceptron</button>
+    <button onclick="show('bayes', this)">Bayes Classifier</button>
+
+    <div class="section-label">Generalization</div>
+    <button onclick="show('hoeffding', this)">Hoeffding Bound</button>
+    <button onclick="show('double', this)">Double Descent</button>
+
+    <div class="section-label">Overview</div>
+    <button onclick="show('map', this)">Concept Map</button>
+  </nav>
+
+  <main>
+
+    <!-- ══════════ PERCEPTRON ══════════ -->
+    <div class="panel active" id="panel-perceptron">
+      <h2>The Perceptron</h2>
+      <p class="subtitle">Click on the canvas to add points · Red = class +1 · Blue = class −1 · Space = toggle class</p>
+
+      <div class="eq-box">Update rule:  w ← w + y·x   when  sign(⟨w,x⟩) ≠ y
+Convergence:  T ≤ (M·‖w*‖ / m)²   (Novikoff, 1962)</div>
+
+      <div class="controls">
+        <button class="btn primary" onclick="trainStep()">▶ Step</button>
+        <button class="btn primary" onclick="trainAuto()">⟳ Run</button>
+        <button class="btn" onclick="resetPerceptron()">↺ Reset</button>
+        <span style="margin-left:8px;">
+          <label>Class: </label>
+          <button class="btn red" id="class-btn" onclick="toggleClass()">+1 (red)</button>
+        </span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="perc-canvas" width="700" height="380" onclick="addPoint(event)"></canvas>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h4>Updates</h4>
+          <div class="big" id="update-count" style="color:var(--orange)">0</div>
+          <p>weight corrections so far</p>
+        </div>
+        <div class="card">
+          <h4>Training Error</h4>
+          <div class="big" id="train-err" style="color:var(--red)">—</div>
+          <p>fraction misclassified</p>
+        </div>
+        <div class="card">
+          <h4>Weight Vector</h4>
+          <div class="big" id="weight-vec" style="color:var(--accent);font-size:16px">[0, 0]</div>
+          <p>current w</p>
+        </div>
+      </div>
+      <div class="log" id="perc-log">// add points, then hit Run...</div>
+    </div>
+
+    <!-- ══════════ BAYES ══════════ -->
+    <div class="panel" id="panel-bayes">
+      <h2>Bayes Optimal Classifier</h2>
+      <p class="subtitle">Visualize how class-conditional densities determine the optimal decision boundary</p>
+
+      <div class="eq-box">Bayes rule:  c*(x) = argmax_y  P(x|y)·P(y)
+Bayes error: E_x[ min(P(+1|x), P(-1|x)) ]  ← irreducible floor</div>
+
+      <div class="controls">
+        <label>Overlap: </label>
+        <input type="range" id="overlap-slider" min="0" max="100" value="40" oninput="redrawBayes()">
+        <span class="val-display" id="overlap-val">40%</span>
+        <label style="margin-left:16px;">π₊: </label>
+        <input type="range" id="pi-slider" min="10" max="90" value="50" oninput="redrawBayes()">
+        <span class="val-display" id="pi-val">50%</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="bayes-canvas" width="700" height="380"></canvas>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h4>Bayes Error</h4>
+          <div class="big" id="bayes-err" style="color:var(--red)">—</div>
+          <p>irreducible error floor</p>
+        </div>
+        <div class="card">
+          <h4>Class Balance</h4>
+          <div class="big" id="class-bal" style="color:var(--accent)">50/50</div>
+          <p>P(+1) / P(−1)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ HOEFFDING ══════════ -->
+    <div class="panel" id="panel-hoeffding">
+      <h2>Hoeffding Generalization Bound</h2>
+      <p class="subtitle">How does our confidence in a model's generalization change with n?</p>
+
+      <div class="eq-box">Single function:  P(|L̂ₙ(h) − L(h)| ≥ t) ≤ 2e^{−2nt²}
+
+With probability ≥ 1−δ:
+  L(h) ≤ L̂ₙ(h) + √( log(2/δ) / 2n )
+
+M classifiers (union bound):
+  L(h) ≤ L̂ₙ(h) + √( log(2M/δ) / 2n )</div>
+
+      <div class="controls">
+        <label>δ (confidence): </label>
+        <input type="range" id="delta-slider" min="1" max="50" value="5" oninput="redrawHoeffding()">
+        <span class="val-display" id="delta-val">0.05</span>
+        <label style="margin-left:16px;">|H| classifiers: </label>
+        <input type="range" id="M-slider" min="0" max="6" value="0" oninput="redrawHoeffding()">
+        <span class="val-display" id="M-val">1</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="hoeff-canvas" width="700" height="360"></canvas>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h4>Bound at n=1000</h4>
+          <div class="big" id="bound-1000" style="color:var(--green)">—</div>
+          <p>generalization gap</p>
+        </div>
+        <div class="card">
+          <h4>n for gap &lt; 0.05</h4>
+          <div class="big" id="n-for-5pct" style="color:var(--orange)">—</div>
+          <p>samples needed</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ DOUBLE DESCENT ══════════ -->
+    <div class="panel" id="panel-double">
+      <h2>Double Descent Risk Curve</h2>
+      <p class="subtitle">The classical U-shape ends where modern ML begins. Belkin et al., PNAS 2019.</p>
+
+      <div class="eq-box">Classical view:   sweet spot between under/overfitting
+Modern reality:   past interpolation threshold, risk drops again
+
+Key insight: very complex interpolating models can outperform "tuned" classical ones</div>
+
+      <div class="controls">
+        <label>Noise σ: </label>
+        <input type="range" id="sigma-slider" min="1" max="50" value="20" oninput="redrawDD()">
+        <span class="val-display" id="sigma-val">0.20</span>
+        <label style="margin-left:16px;">n (samples): </label>
+        <input type="range" id="n-slider" min="10" max="90" value="40" oninput="redrawDD()">
+        <span class="val-display" id="n-val">40</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="dd-canvas" width="700" height="380"></canvas>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h4>Interpolation Threshold</h4>
+          <div class="big" id="interp-thresh" style="color:var(--purple)">d = n</div>
+          <p>where train error → 0</p>
+        </div>
+        <div class="card">
+          <h4>Classical Sweet Spot</h4>
+          <div class="big" id="sweet-spot" style="color:var(--green)">d ≈ n/3</div>
+          <p>minimum in classical regime</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CONCEPT MAP ══════════ -->
+    <div class="panel" id="panel-map">
+      <h2>Concept Map</h2>
+      <p class="subtitle">How the topics in DSC 240 connect to each other and to DSC 215</p>
+
+      <div class="cmap">
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--accent)"></span>Supervised Learning Setup</h3>
+          <p>Data (x,y) drawn iid from P. Learn c: ℝⁿ → {±1} that generalizes.</p>
+          <div class="links">
+            <span class="tag">IID assumption</span><span class="tag">features</span><span class="tag">labels</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--orange)"></span>Bayes Optimal</h3>
+          <p>Best possible classifier given full knowledge of P. Defines the error floor ε*.</p>
+          <div class="links">
+            <span class="tag">posterior</span><span class="tag">Bayes rule</span><span class="tag">Cover-Hart</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--red)"></span>Perceptron</h3>
+          <p>Online linear algorithm. Converges in T ≤ (M/m)² updates when data is separable.</p>
+          <div class="links">
+            <span class="tag">Rosenblatt 57</span><span class="tag">Novikoff 62</span><span class="tag">margin</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--green)"></span>SVM</h3>
+          <p>Finds max-margin separator. Soft margin handles overlapping classes via slack ξ.</p>
+          <div class="links">
+            <span class="tag">hinge loss</span><span class="tag">convex QP</span><span class="tag">Vapnik 92</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--accent)"></span>ERM Framework</h3>
+          <p>Minimize empirical loss over ℋ. Works when ℋ is expressive AND generalizes.</p>
+          <div class="links">
+            <span class="tag">loss functions</span><span class="tag">hypothesis class</span><span class="tag">SGD</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--purple)"></span>Generalization</h3>
+          <p>Hoeffding → union bound → VC theory. How empirical risk bounds expected risk.</p>
+          <div class="links">
+            <span class="tag">VC dimension</span><span class="tag">shattering</span><span class="tag">Rademacher</span>
+          </div>
+        </div>
+        <div class="cmap-node">
+          <h3><span class="dot" style="background:var(--orange)"></span>Double Descent</h3>
+          <p>Classical U-curve ends at interpolation threshold. Very overparameterized models work.</p>
+          <div class="links">
+            <span class="tag">Belkin 2019</span><span class="tag">benign overfit</span><span class="tag">min-norm</span>
+          </div>
+        </div>
+        <div class="cmap-node" style="border-color: var(--border); opacity: 0.75;">
+          <h3><span class="dot" style="background:#888"></span>DSC 215 Bridge</h3>
+          <p>Scientific reliability maps directly: no test set = no control group. PPV = generalization.</p>
+          <div class="links">
+            <span class="tag">Ioannidis</span><span class="tag">PPV</span><span class="tag">replication</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ══════════ NAVIGATION ══════════
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'bayes') setTimeout(redrawBayes, 50);
+  if (id === 'hoeffding') setTimeout(redrawHoeffding, 50);
+  if (id === 'double') setTimeout(redrawDD, 50);
+}
+
+// ══════════ PERCEPTRON ══════════
+let pts = [], w = [0, 0], currentClass = 1, autoInterval = null, updateCount = 0;
+
+function addPoint(e) {
+  const c = document.getElementById('perc-canvas');
+  const r = c.getBoundingClientRect();
+  const sx = c.width / r.width, sy = c.height / r.height;
+  const x = (e.clientX - r.left) * sx;
+  const y = (e.clientY - r.top) * sy;
+  // Normalize to [-1,1]
+  pts.push({ x: (x/c.width)*2-1, y: -((y/c.height)*2-1), label: currentClass });
+  drawPerceptron();
+}
+
+function toggleClass() {
+  currentClass = -currentClass;
+  const btn = document.getElementById('class-btn');
+  btn.textContent = currentClass === 1 ? '+1 (red)' : '−1 (blue)';
+  btn.className = 'btn ' + (currentClass === 1 ? 'red' : '');
+  btn.style.background = currentClass === 1 ? 'var(--red)' : 'var(--accent)';
+}
+
+function resetPerceptron() {
+  pts = []; w = [0,0]; updateCount = 0;
+  clearInterval(autoInterval); autoInterval = null;
+  document.getElementById('update-count').textContent = '0';
+  document.getElementById('train-err').textContent = '—';
+  document.getElementById('weight-vec').textContent = '[0, 0]';
+  document.getElementById('perc-log').textContent = '// add points, then hit Run...';
+  drawPerceptron();
+}
+
+function trainStep() {
+  if (pts.length < 2) { log('Add some points first!'); return; }
+  let updated = false;
+  for (let p of pts) {
+    const score = w[0]*p.x + w[1]*p.y;
+    if (Math.sign(score) !== p.label) {
+      w[0] += p.label * p.x;
+      w[1] += p.label * p.y;
+      updateCount++;
+      updated = true;
+      log(`Update #${updateCount}: w ← [${w[0].toFixed(2)}, ${w[1].toFixed(2)}]`);
+      break;
+    }
+  }
+  if (!updated) log('✓ Converged — no errors!');
+  updateStats();
+  drawPerceptron();
+}
+
+function trainAuto() {
+  if (autoInterval) { clearInterval(autoInterval); autoInterval = null; return; }
+  autoInterval = setInterval(() => {
+    let errors = pts.filter(p => Math.sign(w[0]*p.x + w[1]*p.y) !== p.label);
+    if (errors.length === 0) { clearInterval(autoInterval); autoInterval = null; log('✓ Converged!'); return; }
+    let p = errors[Math.floor(Math.random() * errors.length)];
+    w[0] += p.label * p.x; w[1] += p.label * p.y; updateCount++;
+    updateStats(); drawPerceptron();
+  }, 180);
+}
+
+function updateStats() {
+  document.getElementById('update-count').textContent = updateCount;
+  const err = pts.filter(p => Math.sign(w[0]*p.x + w[1]*p.y) !== p.label).length / Math.max(pts.length, 1);
+  document.getElementById('train-err').textContent = (err * 100).toFixed(0) + '%';
+  document.getElementById('weight-vec').textContent = `[${w[0].toFixed(2)}, ${w[1].toFixed(2)}]`;
+}
+
+function log(msg) {
+  const el = document.getElementById('perc-log');
+  el.textContent = '> ' + msg + '\n' + el.textContent;
+}
+
+function drawPerceptron() {
+  const c = document.getElementById('perc-canvas');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#13161e'; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#1e2234'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(i*W/10, 0); ctx.lineTo(i*W/10, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*H/10); ctx.lineTo(W, i*H/10); ctx.stroke();
+  }
+
+  // Decision boundary
+  if (w[0] !== 0 || w[1] !== 0) {
+    ctx.save();
+    ctx.strokeStyle = '#4caf81'; ctx.lineWidth = 2.5;
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    if (Math.abs(w[1]) > 1e-6) {
+      const x1 = -1, y1 = -w[0]/w[1]*x1;
+      const x2 =  1, y2 = -w[0]/w[1]*x2;
+      const px1 = (x1+1)/2*W, py1 = (1-(y1+1)/2)*H;
+      const px2 = (x2+1)/2*W, py2 = (1-(y2+1)/2)*H;
+      ctx.moveTo(px1, py1); ctx.lineTo(px2, py2);
+    } else {
+      const bx = (-w[0]/w[0]+1)/2*W;
+      ctx.moveTo(bx, 0); ctx.lineTo(bx, H);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Points
+  for (let p of pts) {
+    const px = (p.x+1)/2*W, py = (1-(p.y+1)/2)*H;
+    const pred = Math.sign(w[0]*p.x + w[1]*p.y);
+    const isWrong = pred !== p.label && (w[0] !== 0 || w[1] !== 0);
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI*2);
+    ctx.fillStyle = p.label === 1 ? '#e05c6b' : '#5b8dee';
+    ctx.fill();
+    if (isWrong) {
+      ctx.strokeStyle = '#f09c4a'; ctx.lineWidth = 2.5; ctx.stroke();
+    }
+  }
+
+  // Axes
+  ctx.strokeStyle = '#2a2f40'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+}
+
+drawPerceptron();
+
+// ══════════ BAYES CLASSIFIER ══════════
+function redrawBayes() {
+  const overlap = +document.getElementById('overlap-slider').value / 100;
+  const piPos = +document.getElementById('pi-slider').value / 100;
+  document.getElementById('overlap-val').textContent = (overlap * 100).toFixed(0) + '%';
+  document.getElementById('pi-val').textContent = (piPos * 100).toFixed(0) + '%';
+  document.getElementById('class-bal').textContent = `${(piPos*100).toFixed(0)}/${(100-piPos*100).toFixed(0)}`;
+
+  const c = document.getElementById('bayes-canvas');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#13161e'; ctx.fillRect(0, 0, W, H);
+
+  const sigma = 60 + overlap * 80;
+  const cx1 = W * (0.35 + overlap * 0.15), cx2 = W * (0.65 - overlap * 0.15);
+  const cy = H / 2;
+
+  function gauss1d(x, mu, s) { return Math.exp(-0.5*((x-mu)/s)**2) / (s*Math.sqrt(2*Math.PI)); }
+
+  // Draw density curves
+  const maxDens = gauss1d(cx1, cx1, sigma) * Math.max(piPos, 1-piPos);
+
+  ctx.lineWidth = 3;
+  // Positive class
+  ctx.strokeStyle = '#e05c6b';
+  ctx.beginPath();
+  for (let x = 0; x < W; x++) {
+    const d = gauss1d(x, cx1, sigma) * piPos / maxDens * (H*0.38);
+    const y = cy - d;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Negative class
+  ctx.strokeStyle = '#5b8dee';
+  ctx.beginPath();
+  for (let x = 0; x < W; x++) {
+    const d = gauss1d(x, cx2, sigma) * (1-piPos) / maxDens * (H*0.38);
+    const y = cy + d;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Find & draw Bayes boundary (where P(x|+1)*pi+ = P(x|-1)*pi-)
+  let bayesX = W/2;
+  let minDiff = Infinity;
+  for (let x = 0; x < W; x++) {
+    const sp = gauss1d(x, cx1, sigma) * piPos;
+    const sn = gauss1d(x, cx2, sigma) * (1-piPos);
+    if (Math.abs(sp - sn) < minDiff) { minDiff = Math.abs(sp - sn); bayesX = x; }
+  }
+  ctx.strokeStyle = '#4caf81'; ctx.lineWidth = 2.5; ctx.setLineDash([10, 5]);
+  ctx.beginPath(); ctx.moveTo(bayesX, 20); ctx.lineTo(bayesX, H-20); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = '#e05c6bcc'; ctx.font = '13px DM Sans';
+  ctx.fillText('P(x | y=+1) · P(+1)', cx1 - 70, 50);
+  ctx.fillStyle = '#5b8deecc';
+  ctx.fillText('P(x | y=−1) · P(−1)', cx2 - 70, H - 30);
+  ctx.fillStyle = '#4caf81'; ctx.font = '12px Space Mono';
+  ctx.fillText('Bayes boundary', bayesX + 6, 40);
+
+  // Estimate Bayes error by numerical integration
+  let bayesErr = 0, total = 0;
+  for (let x = 0; x < W; x++) {
+    const sp = gauss1d(x, cx1, sigma) * piPos;
+    const sn = gauss1d(x, cx2, sigma) * (1-piPos);
+    bayesErr += Math.min(sp, sn);
+    total += sp + sn;
+  }
+  const err = (bayesErr / total).toFixed(3);
+  document.getElementById('bayes-err').textContent = err;
+}
+setTimeout(redrawBayes, 100);
+
+// ══════════ HOEFFDING ══════════
+function redrawHoeffding() {
+  const delta = +document.getElementById('delta-slider').value / 100;
+  const Mpow = +document.getElementById('M-slider').value;
+  const M = Math.pow(10, Mpow);
+  document.getElementById('delta-val').textContent = delta.toFixed(2);
+  document.getElementById('M-val').textContent = M >= 1e6 ? '1M' : M.toString();
+
+  const c = document.getElementById('hoeff-canvas');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#13161e'; ctx.fillRect(0, 0, W, H);
+
+  const pad = {l:55, r:20, t:20, b:45};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const nMax = 5000;
+
+  function bound(n) { return Math.sqrt(Math.log(2*M/delta) / (2*n)); }
+
+  // Axes
+  ctx.strokeStyle = '#2a2f40'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ph); ctx.lineTo(pad.l+pw, pad.t+ph); ctx.stroke();
+
+  // Grid lines
+  ctx.strokeStyle = '#1e2234'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + ph * (1 - i/5);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+pw, y); ctx.stroke();
+    ctx.fillStyle = '#8b90a8'; ctx.font = '11px Space Mono';
+    ctx.fillText((i/5).toFixed(1), pad.l - 34, y + 4);
+  }
+  for (let i = 0; i <= 5; i++) {
+    const x = pad.l + pw * (i/5);
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+ph); ctx.stroke();
+    ctx.fillStyle = '#8b90a8'; ctx.font = '11px Space Mono';
+    ctx.fillText((nMax*i/5/1000).toFixed(0)+'k', x-10, pad.t+ph+18);
+  }
+
+  // Bound curve
+  const clamp = v => Math.min(Math.max(v, 0), 1);
+  ctx.strokeStyle = '#5b8dee'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+  ctx.beginPath();
+  for (let i = 1; i <= pw; i++) {
+    const n = 1 + (nMax-1) * i/pw;
+    const b = clamp(bound(n));
+    const x = pad.l + i, y = pad.t + ph * (1 - b);
+    i === 1 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 5% line
+  ctx.strokeStyle = '#4caf8166'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+  const y5 = pad.t + ph * 0.95;
+  ctx.beginPath(); ctx.moveTo(pad.l, y5); ctx.lineTo(pad.l+pw, y5); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#4caf81'; ctx.font = '11px DM Sans';
+  ctx.fillText('5% gap', pad.l + pw - 55, y5 - 5);
+
+  // Vertical line at n=1000
+  const x1k = pad.l + pw * 1000/nMax;
+  ctx.strokeStyle = '#f09c4a66'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(x1k, pad.t); ctx.lineTo(x1k, pad.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = '#8b90a8'; ctx.font = '12px DM Sans';
+  ctx.fillText('n (training samples)', pad.l + pw/2 - 50, H - 8);
+  ctx.save(); ctx.translate(14, pad.t + ph/2 + 60);
+  ctx.rotate(-Math.PI/2); ctx.fillText('Generalization bound', 0, 0); ctx.restore();
+
+  // Stats
+  const b1000 = bound(1000).toFixed(3);
+  document.getElementById('bound-1000').textContent = b1000;
+  let nFor5 = null;
+  for (let n = 1; n <= nMax*10; n += 5) {
+    if (bound(n) < 0.05) { nFor5 = n; break; }
+  }
+  document.getElementById('n-for-5pct').textContent = nFor5 ? nFor5.toLocaleString() : '>50k';
+}
+setTimeout(redrawHoeffding, 100);
+
+// ══════════ DOUBLE DESCENT ══════════
+function redrawDD() {
+  const sigma = +document.getElementById('sigma-slider').value / 100;
+  const n = +document.getElementById('n-slider').value;
+  document.getElementById('sigma-val').textContent = sigma.toFixed(2);
+  document.getElementById('n-val').textContent = n;
+  document.getElementById('interp-thresh').textContent = 'd = ' + n;
+  document.getElementById('sweet-spot').textContent = 'd ≈ ' + Math.round(n/3);
+
+  const c = document.getElementById('dd-canvas');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#13161e'; ctx.fillRect(0, 0, W, H);
+
+  const pad = {l:55, r:20, t:30, b:50};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const dMax = n * 4;
+
+  // Approximate double descent curve
+  // Classical: U-shape from d=1 to d=n (train error -> 0 as d->n)
+  // Interpolation: spike at d=n
+  // Modern: decreasing from d=n to d>>n
+  function testRisk(d) {
+    const noise = sigma;
+    if (d < n) {
+      // Classical regime: bias-variance tradeoff (U-shape)
+      const bias = 2.0 * (1 - d/n)**1.5;
+      const variance = noise * (d/n) * 0.8;
+      return bias + variance + noise*0.2;
+    } else if (d < n * 1.05) {
+      // Spike at interpolation threshold
+      const t = (d - n) / (n * 0.05);
+      return 3.0 * noise * Math.exp(-t * 5) + noise * 0.5;
+    } else {
+      // Overparameterized: decreasing toward noise floor
+      const excess = (d - n) / n;
+      return noise * (0.8 + 0.5 / (1 + excess * 2));
+    }
+  }
+
+  function trainRisk(d) {
+    if (d < n) return Math.max(0, 0.8 * (1 - d/n)**2);
+    return 0;  // interpolates
+  }
+
+  const maxRisk = 1.5;
+
+  // Axes
+  ctx.strokeStyle = '#2a2f40'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ph); ctx.lineTo(pad.l+pw, pad.t+ph); ctx.stroke();
+
+  // Grid
+  ctx.strokeStyle = '#1e2234'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ph * i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+pw, y); ctx.stroke();
+    ctx.fillStyle = '#8b90a8'; ctx.font = '11px Space Mono';
+    ctx.fillText((maxRisk*(1-i/4)).toFixed(2), pad.l-38, y+4);
+  }
+
+  // Interpolation threshold line
+  const xThresh = pad.l + pw * (n/dMax);
+  ctx.strokeStyle = '#a47ff566'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(xThresh, pad.t); ctx.lineTo(xThresh, pad.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#a47ff5'; ctx.font = '11px DM Sans';
+  ctx.fillText('d=n', xThresh+4, pad.t+14);
+
+  // Bayes error line
+  const yBayes = pad.t + ph * (1 - sigma*0.6/maxRisk);
+  ctx.strokeStyle = '#f09c4a55'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, yBayes); ctx.lineTo(pad.l+pw, yBayes); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f09c4a'; ctx.font = '11px DM Sans';
+  ctx.fillText('Bayes error', pad.l+pw-75, yBayes-5);
+
+  // Train error curve
+  ctx.strokeStyle = '#4caf81'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+  ctx.beginPath();
+  for (let i = 0; i <= pw; i++) {
+    const d = 1 + (dMax-1)*i/pw;
+    const r = Math.min(trainRisk(d), maxRisk);
+    const x = pad.l+i, y = pad.t + ph*(1 - r/maxRisk);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Test error curve
+  ctx.strokeStyle = '#e05c6b'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let first = true;
+  for (let i = 0; i <= pw; i++) {
+    const d = 1 + (dMax-1)*i/pw;
+    const r = Math.min(testRisk(d), maxRisk);
+    const x = pad.l+i, y = pad.t + ph*(1 - r/maxRisk);
+    if (first) { ctx.moveTo(x,y); first=false; } else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // Legend
+  const lx = pad.l + pw - 160;
+  ctx.strokeStyle='#4caf81'; ctx.lineWidth=2; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(lx, pad.t+12); ctx.lineTo(lx+30, pad.t+12); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#4caf81'; ctx.font='12px DM Sans'; ctx.fillText('Train error', lx+35, pad.t+16);
+
+  ctx.strokeStyle='#e05c6b'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(lx, pad.t+30); ctx.lineTo(lx+30, pad.t+30); ctx.stroke();
+  ctx.fillStyle='#e05c6b'; ctx.fillText('Test error', lx+35, pad.t+34);
+
+  // Regime labels
+  ctx.fillStyle = '#8b90a855'; ctx.font = 'italic 13px DM Sans';
+  ctx.fillText('Classical', pad.l + xThresh*0.25, pad.t+ph-10);
+  ctx.fillText('Modern', xThresh + (pad.l+pw-xThresh)*0.35, pad.t+ph-10);
+
+  // Axis labels
+  ctx.fillStyle = '#8b90a8'; ctx.font = '12px DM Sans';
+  ctx.fillText('Model complexity d (# parameters)', pad.l + pw/2 - 90, H-10);
+  ctx.save(); ctx.translate(14, pad.t + ph/2 + 30);
+  ctx.rotate(-Math.PI/2); ctx.fillText('Risk (MSE)', 0, 0); ctx.restore();
+}
+setTimeout(redrawDD, 100);
+</script>
+</body>
+</html>
