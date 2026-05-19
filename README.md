@@ -232,7 +232,7 @@ open demos/interactive_concepts.html
 
 ## 👤 Author
 
-**[Your Name]** · DSC 240/215 · UC San Diego · Spring 2026  
+**Aldair Espinoza** · DSC 240 · UC San Diego · Spring 2026  
 Instructor: Prof. Mikhail Belkin
 
 *This repo is a living document — updated as the course progresses.*
