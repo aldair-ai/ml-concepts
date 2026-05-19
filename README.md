@@ -3,7 +3,7 @@
 
 > *"More data ≠ more knowledge or insight."* — Mikhail Belkin
 
-A structured study companion covering the theory and algorithms of modern machine learning — from Bayes-optimal classifiers to the double descent phenomenon. Built alongside **DSC 240** (Machine Learning) and **DSC 215** (Statistical Critical Thinking) at UC San Diego.
+A structured study companion covering the theory and algorithms of modern machine learning — from Bayes-optimal classifiers to the double descent phenomenon. Built alongside **DSC 240** (Machine Learning) at UC San Diego.
 
 ---
 
